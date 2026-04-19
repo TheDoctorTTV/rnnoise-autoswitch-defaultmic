@@ -9,7 +9,7 @@ Files
 - `99-rnnoise-source.conf`
   PipeWire filter chain config creating RNNoise virtual mic
 - `rnnoise-watch-default.sh`
-  Watcher script reading current default source then linking it into RNNoise
+  Watcher script reading current default source then linking only that source into RNNoise
 - `rnnoise-watch-default.service`
   User systemd service running watcher automatically
 - `install.sh`
@@ -69,6 +69,7 @@ Watcher will
 - detect current default raw microphone
 - link that source into RNNoise filter
 - switch automatically when default microphone changes
+- remove stale mic links after service restarts or device changes so only one input feeds RNNoise
 
 Troubleshooting
 
@@ -83,6 +84,8 @@ Check current links
 pw-link -l | grep rnnoise
 ```
 
+Correct routing should show one raw mic feeding `capture.rnnoise_mic:playback_MONO` and apps reading from `rnnoise_mic:capture_MONO`.
+
 Check default source
 ```bash
 wpctl status
@@ -94,3 +97,5 @@ Notes
 - no EasyEffects required
 - service path uses `%h` so config works across usernames
 - watcher no longer hardcodes microphone names
+- watcher parses current WirePlumber `wpctl inspect` output format
+- stale RNNoise input links are cleaned up by PipeWire link id
