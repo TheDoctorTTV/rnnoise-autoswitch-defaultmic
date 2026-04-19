@@ -5,7 +5,7 @@ Wants=pipewire.service wireplumber.service
 
 [Service]
 Type=simple
-ExecStart=/home/thedoctorttv/.local/bin/rnnoise-watch-default.fish
+ExecStart=%h/.local/bin/rnnoise-watch-default.sh
 Restart=always
 RestartSec=2
 

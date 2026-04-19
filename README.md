@@ -1,86 +1,96 @@
-RNNoise PipeWire Setup (Auto Default Mic Switching)
+RNNoise PipeWire Setup Auto Default Mic Switching
 
-This setup creates a virtual microphone ("RNNoise Mic") that:
-- Applies RNNoise noise suppression
-- Automatically follows whatever mic is set as the system default
+Setup creates virtual microphone named RNNoise Mic that
+- applies RNNoise noise suppression
+- follows whatever microphone PipeWire marks default
 
---------------------------------------------------
+Files
 
-FILES
+- `99-rnnoise-source.conf`
+  PipeWire filter chain config creating RNNoise virtual mic
+- `rnnoise-watch-default.sh`
+  Watcher script reading current default source then linking it into RNNoise
+- `rnnoise-watch-default.service`
+  User systemd service running watcher automatically
+- `install.sh`
+  One step installer copying files into user config then enabling service
+- `uninstall.sh`
+  One step uninstaller removing installed user files then disabling service
 
-99-rnnoise-source.conf
-→ PipeWire filter-chain config that creates the RNNoise virtual mic
+Dependencies
 
-rnnoise-watch-default.fish
-→ Script that monitors the default mic and relinks it into RNNoise
+Install PipeWire RNNoise LADSPA plugin before setup
 
-rnnoise-watch-default.service
-→ Systemd user service that runs the watcher automatically
+Arch
+```bash
+sudo pacman -S noise-suppression-for-voice
+```
 
---------------------------------------------------
+Debian Ubuntu
+```bash
+sudo apt install lsp-plugins-ladspa
+```
 
-DEPENDENCIES
+If plugin installs library outside `/usr/lib/ladspa/librnnoise_ladspa.so` update path inside `99-rnnoise-source.conf`.
 
-Install required plugin:
-    sudo pacman -S noise-suppression-for-voice
+Setup
 
---------------------------------------------------
+Run installer from repository root
 
-SETUP
+```bash
+chmod +x install.sh
+./install.sh
+```
 
-1. Copy config:
-    mkdir -p ~/.config/pipewire/pipewire.conf.d
-    cp 99-rnnoise-source.conf ~/.config/pipewire/pipewire.conf.d/
+Uninstall
 
-2. Copy script:
-    mkdir -p ~/.local/bin
-    cp rnnoise-watch-default.fish ~/.local/bin/
-    chmod +x ~/.local/bin/rnnoise-watch-default.fish
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
 
-3. Copy service:
-    mkdir -p ~/.config/systemd/user
-    cp rnnoise-watch-default.service ~/.config/systemd/user/
+Manual setup if preferred
 
-4. Enable service:
-    systemctl --user daemon-reload
-    systemctl --user enable --now rnnoise-watch-default.service
+```bash
+mkdir -p ~/.config/pipewire/pipewire.conf.d ~/.local/bin ~/.config/systemd/user
+install -m 0644 99-rnnoise-source.conf ~/.config/pipewire/pipewire.conf.d/99-rnnoise-source.conf
+install -m 0755 rnnoise-watch-default.sh ~/.local/bin/rnnoise-watch-default.sh
+install -m 0644 rnnoise-watch-default.service ~/.config/systemd/user/rnnoise-watch-default.service
+systemctl --user daemon-reload
+systemctl --user enable --now rnnoise-watch-default.service
+systemctl --user restart pipewire pipewire-pulse wireplumber
+```
 
-5. Restart PipeWire:
-    systemctl --user restart pipewire pipewire-pulse wireplumber
+Usage
 
---------------------------------------------------
+Set OBS Discord VRChat and similar apps input device to `RNNoise Mic`.
 
-USAGE
+Watcher will
+- detect current default raw microphone
+- link that source into RNNoise filter
+- switch automatically when default microphone changes
 
-- Set apps (OBS, Discord, etc) to use:
-    "RNNoise Mic"
+Troubleshooting
 
-- The script will automatically:
-    - Detect your default mic (desktop, VR, etc)
-    - Route it through RNNoise
+Check service
+```bash
+systemctl --user status rnnoise-watch-default.service
+journalctl --user -u rnnoise-watch-default.service -f
+```
 
---------------------------------------------------
+Check current links
+```bash
+pw-link -l | grep rnnoise
+```
 
-TROUBLESHOOTING
+Check default source
+```bash
+wpctl status
+wpctl inspect @DEFAULT_AUDIO_SOURCE@
+```
 
-Check links:
-    pw-link -l | grep rnnoise
+Notes
 
-Check default mic:
-    wpctl status
-
-Manually set default:
-    wpctl set-default <ID>
-
-Restart service:
-    systemctl --user restart rnnoise-watch-default.service
-
---------------------------------------------------
-
-NOTES
-
-- Uses PipeWire filter-chain (no EasyEffects required)
-- Supports multiple microphones dynamically
-- Designed for streaming setups (OBS, Discord, VRChat, etc)
-
---------------------------------------------------
+- no EasyEffects required
+- service path uses `%h` so config works across usernames
+- watcher no longer hardcodes microphone names
