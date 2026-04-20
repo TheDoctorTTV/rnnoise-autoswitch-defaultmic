@@ -1,10 +1,10 @@
-RNNoise PipeWire Setup Auto Default Mic Switching
+# RNNoise PipeWire Setup Auto Default Mic Switching
 
 Setup creates virtual microphone named RNNoise Mic that
 - applies RNNoise noise suppression
 - follows whatever microphone PipeWire marks default
 
-Files
+## Files
 
 - `99-rnnoise-source.conf`
   PipeWire filter chain config creating RNNoise virtual mic
@@ -17,16 +17,16 @@ Files
 - `uninstall.sh`
   One step uninstaller removing installed user files then disabling service
 
-Dependencies
+## Dependencies
 
 Install PipeWire RNNoise LADSPA plugin before setup
 
-Arch
+### Arch
 ```bash
 sudo pacman -S noise-suppression-for-voice
 ```
 
-Debian Ubuntu
+### Debian Ubuntu
 ```bash
 sudo apt install lsp-plugins-ladspa
 ```
@@ -34,7 +34,7 @@ sudo apt install lsp-plugins-ladspa
 Installer will try to detect `librnnoise_ladspa.so` automatically.
 If autodetection fails rerun with `RNNOISE_PLUGIN_PATH=/full/path/to/librnnoise_ladspa.so ./install.sh`.
 
-Setup
+## Setup
 
 Clone repo then run installer from repository root
 
@@ -44,14 +44,15 @@ cd rnnoise-autoswitch-defaultmic
 chmod +x install.sh
 ./install.sh
 ```
-Uninstall
+
+## Uninstall
 
 ```bash
 chmod +x uninstall.sh
 ./uninstall.sh
 ```
 
-Manual setup if preferred
+## Manual Setup
 
 ```bash
 mkdir -p ~/.config/pipewire/pipewire.conf.d ~/.local/bin ~/.config/systemd/user
@@ -63,7 +64,7 @@ systemctl --user enable --now rnnoise-watch-default.service
 systemctl --user restart pipewire pipewire-pulse wireplumber
 ```
 
-Usage
+## Usage
 
 Set OBS, Discord, VRChat and similar apps input device to `RNNoise Mic`.
 
@@ -73,28 +74,28 @@ Watcher will
 - switch automatically when default microphone changes
 - remove stale mic links after service restarts or device changes so only one input feeds RNNoise
 
-Troubleshooting
+## Troubleshooting
 
-Check service
+### Check Service
 ```bash
 systemctl --user status rnnoise-watch-default.service
 journalctl --user -u rnnoise-watch-default.service -f
 ```
 
-Check current links
+### Check Current Links
 ```bash
 pw-link -l | grep rnnoise
 ```
 
 Correct routing should show one raw mic feeding `capture.rnnoise_mic:playback_MONO` and apps reading from `rnnoise_mic:capture_MONO`.
 
-Check default source
+### Check Default Source
 ```bash
 wpctl status
 wpctl inspect @DEFAULT_AUDIO_SOURCE@
 ```
 
-Notes
+## Notes
 
 - no EasyEffects required
 - service path uses `%h` so config works across usernames
